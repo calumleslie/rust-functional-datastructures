@@ -18,34 +18,7 @@ impl <T: Ord + Clone + Debug> Set<T> for Tree<T> {
 		return Tree::Empty;
 	}
 	fn insert(&self, new_value: T) -> Self {
-		return match *self {
-			Tree::Empty => {
-				let empty = Arc::new( Tree::empty() );
-				Tree::Node { 
-					left: empty.clone(),
-					right: empty.clone(),
-					value: new_value
-				}
-			},
-			Tree::Node { ref left, ref value, ref right } => {
-				if new_value < *value {
-					Tree::Node {
-						left: Arc::new( left.insert( new_value ) ),
-						value: value.clone(),
-						right: right.clone()
-					}
-				} else if new_value > *value {
-					Tree::Node {
-						left: left.clone(),
-						value: value.clone(),
-						right: Arc::new( right.insert( new_value ) )
-					}
-				} else {
-					// TODO: Would be good if this could return the original?
-					return self.clone();
-				}
-			}
-		}
+		self.try_insert(new_value).unwrap_or_else(||self.clone())
 	}
 	fn member(&self, search_value: T) -> bool {
 		return match *self {
@@ -67,6 +40,35 @@ impl<T: Ord + Clone + Debug> Tree<T> {
 				left.member_with_candidate(search_value, best_candidate)
 			} else {
 				right.member_with_candidate(search_value, value.clone())
+			}
+		}
+	}
+	fn try_insert(&self, new_value: T) -> Option<Self> {
+		match *self {
+			Tree::Empty => {
+				let empty = Arc::new( Tree::empty() );
+				Some( Tree::Node { 
+					left: empty.clone(),
+					right: empty.clone(),
+					value: new_value
+				} )
+			},
+			Tree::Node { ref left, ref value, ref right } => {
+				if new_value < *value {
+					left.try_insert( new_value ).map(|new_left| Tree::Node {
+						left: Arc::new( new_left ),
+						value: value.clone(),
+						right: right.clone()
+					})					
+				} else if new_value > *value {
+					right.try_insert( new_value ).map(|new_right| Tree::Node {
+						left: left.clone(),
+						value: value.clone(),
+						right: Arc::new( new_right )
+					})
+				} else {
+					None
+				}
 			}
 		}
 	}
