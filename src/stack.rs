@@ -10,6 +10,8 @@ trait Stack<T: Clone> {
 	fn head(&self) -> Result<T, StackError>;
 	fn tail(&self) -> Result<Arc<Self>, StackError>;
 	fn update(&self, i: u32, value: T) -> Result<Self,StackError>; 
+	fn size(&self) -> u32;
+	//fn value_at(&self, i: u32) -> Result<Self,StackError>;
 }
 
 #[derive(Debug, Clone)]
@@ -55,6 +57,12 @@ impl<T: Clone> Stack<T> for CustomStack<T> {
 			}
 		}
 	}
+	fn size(&self) -> u32 {
+		return match *self {
+			CustomStack::Empty => 0,
+			CustomStack::Cons { ref tail, .. } => 1 + tail.size()
+		}
+	}
 }
 
 // Only compile this in tests to stop compiler whining.
@@ -74,6 +82,7 @@ fn empty_is_empty() {
 	let stack: CustomStack<()> = CustomStack::empty();
 
 	assert!( stack.is_empty() );
+	assert!( stack.size() == 0 );
 }
 
 #[test]
@@ -81,6 +90,7 @@ fn cons_is_not_empty() {
 	let stack: CustomStack<i32> = CustomStack::empty().cons(4);
 
 	assert!( !stack.is_empty() );
+	assert!( stack.size() == 1 );
 }
 
 #[test]
@@ -114,6 +124,13 @@ fn head_after_tail() {
 	let tailtail = stack.tail().unwrap().tail().unwrap();
 
 	assert!( tailtail.head().unwrap() == 1 );
+}
+
+#[test]
+fn size_multiple_items() {
+	let stack: CustomStack<i32> = CustomStack::empty().cons(1).cons(2).cons(3);
+
+	assert!( stack.size() == 3 );
 }
 
 #[test]
