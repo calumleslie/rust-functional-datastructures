@@ -61,7 +61,40 @@ impl<T: Ord + Clone + Debug> Tree<T> {
 						right: right.clone()
 					})					
 				} else if new_value > *value {
-					right.try_insert( new_value ).map(|new_right| Tree::Node {
+					right.try_insert_with_candidate( new_value, value.clone() ).map(|new_right| Tree::Node {
+						left: left.clone(),
+						value: value.clone(),
+						right: Arc::new( new_right )
+					})
+				} else {
+					None
+				}
+			}
+		}
+	}
+	fn try_insert_with_candidate(&self, new_value: T, candidate: T) -> Option<Self> {
+		match *self {
+			Tree::Empty => {
+				if new_value == candidate {
+					None
+				} else {
+					let empty = Arc::new( Tree::empty() );
+					Some( Tree::Node { 
+						left: empty.clone(),
+						right: empty.clone(),
+						value: new_value
+					} )
+				}
+			},
+			Tree::Node { ref left, ref value, ref right } => {
+				if new_value < *value {
+					left.try_insert_with_candidate( new_value, candidate ).map(|new_left| Tree::Node {
+						left: Arc::new( new_left ),
+						value: value.clone(),
+						right: right.clone()
+					})					
+				} else if new_value > *value {
+					right.try_insert_with_candidate( new_value, value.clone() ).map(|new_right| Tree::Node {
 						left: left.clone(),
 						value: value.clone(),
 						right: Arc::new( new_right )
