@@ -48,7 +48,6 @@ impl <T: Ord + Clone + Debug> Set<T> for Tree<T> {
 		}
 	}
 	fn member(&self, search_value: T) -> bool {
-		println!( "member {:?} ({:?})", self, search_value );
 		return match *self {
 			Tree::Empty => false,
 			Tree::Node { ref left, ref value, ref right } => if search_value < *value {
@@ -62,7 +61,6 @@ impl <T: Ord + Clone + Debug> Set<T> for Tree<T> {
 
 impl<T: Ord + Clone + Debug> Tree<T> {
 	fn member_with_candidate(&self, search_value:T, best_candidate: T) -> bool {
-		println!( "member_with_candidate {:?} ({:?}, {:?})", self, search_value, best_candidate );
 		return match *self {
 			Tree::Empty => search_value == best_candidate,
 			Tree::Node { ref left, ref value, ref right } => if search_value < *value {
