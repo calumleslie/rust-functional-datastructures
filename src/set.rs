@@ -1,4 +1,5 @@
 use std::sync::Arc;
+use std::fmt::Debug;
 
 trait Set<T: Ord> {
 	fn empty() -> Self;
@@ -12,7 +13,7 @@ enum Tree<T: Ord + Clone> {
 	Node { left: Arc<Tree<T>>, value: T, right: Arc<Tree<T>> }
 }
 
-impl <T: Ord + Clone> Set<T> for Tree<T> {
+impl <T: Ord + Clone + Debug> Set<T> for Tree<T> {
 	fn empty() -> Self {
 		return Tree::Empty;
 	}
@@ -47,14 +48,27 @@ impl <T: Ord + Clone> Set<T> for Tree<T> {
 		}
 	}
 	fn member(&self, search_value: T) -> bool {
+		println!( "member {:?} ({:?})", self, search_value );
 		return match *self {
 			Tree::Empty => false,
 			Tree::Node { ref left, ref value, ref right } => if search_value < *value {
 				left.member(search_value)
-			} else if search_value > *value {
-				right.member(search_value)
 			} else {
-				true
+				right.member_with_candidate(search_value, value.clone())
+			}
+		}
+	}
+}
+
+impl<T: Ord + Clone + Debug> Tree<T> {
+	fn member_with_candidate(&self, search_value:T, best_candidate: T) -> bool {
+		println!( "member_with_candidate {:?} ({:?}, {:?})", self, search_value, best_candidate );
+		return match *self {
+			Tree::Empty => search_value == best_candidate,
+			Tree::Node { ref left, ref value, ref right } => if search_value < *value {
+				left.member_with_candidate(search_value, best_candidate)
+			} else {
+				right.member_with_candidate(search_value, value.clone())
 			}
 		}
 	}
