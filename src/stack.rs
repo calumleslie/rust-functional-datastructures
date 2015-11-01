@@ -57,6 +57,18 @@ impl<T: Clone> Stack<T> for CustomStack<T> {
 	}
 }
 
+// Only compile this in tests to stop compiler whining.
+#[cfg(test)]
+fn suffixes<T: Clone>(stack: &Arc<CustomStack<T>>) -> CustomStack<Arc<CustomStack<T>>> {
+	let tail_suffixes = match **stack {
+		CustomStack::Empty => CustomStack::empty(),
+		CustomStack::Cons { ref tail, .. } => suffixes(&tail)
+	};
+
+	return tail_suffixes.cons( stack.clone() );
+}
+
+
 #[test]
 fn empty_is_empty() {
 	let stack: CustomStack<()> = CustomStack::empty();
@@ -132,4 +144,37 @@ fn update_invalid() {
 	let updated = stack.clone().update(4,10);
 
 	assert!(updated.is_err());
+}
+
+#[test] 
+fn suffixes_empty() {
+	let stack: Arc<CustomStack<()>> = Arc::new( CustomStack::empty() );
+	let suffixes = suffixes(&stack);
+
+	// First suffix is empty list
+	assert!( suffixes.head().unwrap().is_empty() );
+
+	// No more suffixes
+	assert!( suffixes.tail().unwrap().is_empty() );
+}
+
+#[test] 
+fn suffixes_nonempty() {
+	let stack: Arc<CustomStack<i32>> = Arc::new( CustomStack::empty().cons(1).cons(2) );
+	let suffixes = suffixes(&stack);
+
+	let suffix1 = suffixes.head().unwrap();
+	assert!( suffix1.head().unwrap() == 2 );
+	assert!( suffix1.tail().unwrap().head().unwrap() == 1 );
+	assert!( suffix1.tail().unwrap().tail().unwrap().is_empty() );
+
+	let suffix2 = suffixes.tail().unwrap().head().unwrap();
+	assert!( suffix2.head().unwrap() == 1 );
+	assert!( suffix2.tail().unwrap().is_empty() );
+
+	let suffix3 = suffixes.tail().unwrap().tail().unwrap().head().unwrap();
+	assert!( suffix3.is_empty() );
+
+	assert!( suffixes.tail().unwrap().tail().unwrap().tail().unwrap().is_empty() );
+
 }
