@@ -11,7 +11,7 @@ trait Stack<T: Clone> {
 	fn tail(&self) -> Result<Arc<Self>, StackError>;
 	fn update(&self, i: u32, value: T) -> Result<Self,StackError>; 
 	fn size(&self) -> u32;
-	//fn value_at(&self, i: u32) -> Result<Self,StackError>;
+	fn get(&self, i: u32) -> Result<T,StackError>;
 }
 
 #[derive(Debug, Clone)]
@@ -61,6 +61,15 @@ impl<T: Clone> Stack<T> for CustomStack<T> {
 		return match *self {
 			CustomStack::Empty => 0,
 			CustomStack::Cons { ref tail, .. } => 1 + tail.size()
+		}
+	}
+	fn get(&self, i: u32) -> Result<T, StackError> {
+		return match *self {
+			CustomStack::Empty => Err(StackError::IndexOutOfRange),
+			CustomStack::Cons { ref value, ref tail } => match i {
+				0 => Ok(value.clone()),
+				_ => tail.get(i - 1)
+			}
 		}
 	}
 }
@@ -131,6 +140,20 @@ fn size_multiple_items() {
 	let stack: CustomStack<i32> = CustomStack::empty().cons(1).cons(2).cons(3);
 
 	assert!( stack.size() == 3 );
+}
+
+#[test]
+fn get_valid() {
+	let stack: CustomStack<i32> = CustomStack::empty().cons(1).cons(2).cons(3);
+
+	assert!( stack.get(1).unwrap() == 2 );
+}
+
+#[test]
+fn get_out_of_range() {
+	let stack: CustomStack<i32> = CustomStack::empty().cons(1).cons(2).cons(3);
+
+	assert!( stack.get(3).is_err() );
 }
 
 #[test]
