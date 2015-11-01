@@ -23,11 +23,7 @@ impl <T: Ord + Clone + Debug> Set<T> for Tree<T> {
 	fn member(&self, search_value: T) -> bool {
 		return match *self {
 			Tree::Empty => false,
-			Tree::Node { ref left, ref value, ref right } => if search_value < *value {
-				left.member(search_value)
-			} else {
-				right.member_with_candidate(search_value, value.clone())
-			}
+			Tree::Node { ref value, .. } => self.member_with_candidate(search_value, value.clone())
 		}
 	}
 }
@@ -53,23 +49,7 @@ impl<T: Ord + Clone + Debug> Tree<T> {
 					value: new_value
 				} )
 			},
-			Tree::Node { ref left, ref value, ref right } => {
-				if new_value < *value {
-					left.try_insert( new_value ).map(|new_left| Tree::Node {
-						left: Arc::new( new_left ),
-						value: value.clone(),
-						right: right.clone()
-					})					
-				} else if new_value > *value {
-					right.try_insert_with_candidate( new_value, value.clone() ).map(|new_right| Tree::Node {
-						left: left.clone(),
-						value: value.clone(),
-						right: Arc::new( new_right )
-					})
-				} else {
-					None
-				}
-			}
+			Tree::Node { ref value, .. } => self.try_insert_with_candidate(new_value, value.clone())
 		}
 	}
 	fn try_insert_with_candidate(&self, new_value: T, candidate: T) -> Option<Self> {
