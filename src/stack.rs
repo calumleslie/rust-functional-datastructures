@@ -173,9 +173,16 @@ fn update_valid() {
 	let stack: CustomStack<i32> = CustomStack::empty().cons(1).cons(2).cons(3);
 	let updated = stack.clone().update(1,10).unwrap();
 
-	assert!(updated.head().unwrap() == 3);
-	assert!(updated.tail().unwrap().head().unwrap() == 10);
-	assert!(updated.tail().unwrap().tail().unwrap().head().unwrap() == 1);
+	assert!(updated.size() == 3);
+	assert!(updated.get(0).unwrap() == 3);
+	assert!(updated.get(1).unwrap() == 10);
+	assert!(updated.get(2).unwrap() == 1);
+
+	// And stack is unchanged (I think the typesystem ensures this?)
+	assert!(stack.size() == 3);
+	assert!(stack.get(0).unwrap() == 3);
+	assert!(stack.get(1).unwrap() == 2);
+	assert!(stack.get(2).unwrap() == 1);
 }
 
 #[test]
@@ -191,11 +198,8 @@ fn suffixes_empty() {
 	let stack: Arc<CustomStack<()>> = Arc::new( CustomStack::empty() );
 	let suffixes = suffixes(&stack);
 
-	// First suffix is empty list
-	assert!( suffixes.head().unwrap().is_empty() );
-
-	// No more suffixes
-	assert!( suffixes.tail().unwrap().is_empty() );
+	assert!(suffixes.size() == 1);
+	assert!(suffixes.get(0).unwrap().is_empty() );
 }
 
 #[test] 
@@ -203,18 +207,18 @@ fn suffixes_nonempty() {
 	let stack: Arc<CustomStack<i32>> = Arc::new( CustomStack::empty().cons(1).cons(2) );
 	let suffixes = suffixes(&stack);
 
-	let suffix1 = suffixes.head().unwrap();
-	assert!( suffix1.head().unwrap() == 2 );
-	assert!( suffix1.tail().unwrap().head().unwrap() == 1 );
-	assert!( suffix1.tail().unwrap().tail().unwrap().is_empty() );
+	assert!( suffixes.size() == 3 );
 
-	let suffix2 = suffixes.tail().unwrap().head().unwrap();
-	assert!( suffix2.head().unwrap() == 1 );
-	assert!( suffix2.tail().unwrap().is_empty() );
+	let suffix1 = suffixes.get(0).unwrap();
+	assert!( suffix1.size() == 2 );
+	assert!( suffix1.get(0).unwrap() == 2 );
+	assert!( suffix1.get(1).unwrap() == 1 ); 
 
-	let suffix3 = suffixes.tail().unwrap().tail().unwrap().head().unwrap();
+	let suffix2 = suffixes.get(1).unwrap();
+	assert!( suffix2.size() == 1 );
+	assert!( suffix2.get(0).unwrap() == 1 );
+
+	let suffix3 = suffixes.get(2).unwrap();
 	assert!( suffix3.is_empty() );
-
-	assert!( suffixes.tail().unwrap().tail().unwrap().tail().unwrap().is_empty() );
 
 }
