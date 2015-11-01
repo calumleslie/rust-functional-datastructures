@@ -48,9 +48,9 @@ impl<T: Clone> Stack<T> for CustomStack<T> {
 			CustomStack::Empty => Err(StackError::IndexOutOfRange),
 			CustomStack::Cons { ref value, ref tail } => match i {
 				0 => Ok(tail.clone().cons(new_value)),
-				_ => match tail.update(i - 1, new_value) {
-					Ok(updated_tail) => Ok(updated_tail.cons(value.clone())),
-					e @ Err(_) => e
+				_ => {
+					let updated_tail = try!(tail.update(i - 1, new_value));
+					Ok(updated_tail.cons(value.clone()))
 				}
 			}
 		}
