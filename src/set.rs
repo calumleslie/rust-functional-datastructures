@@ -41,14 +41,7 @@ impl<T: Ord + Clone + Debug> Tree<T> {
 	}
 	fn try_insert(&self, new_value: T) -> Option<Self> {
 		match *self {
-			Tree::Empty => {
-				let empty = Arc::new( Tree::empty() );
-				Some( Tree::Node { 
-					left: empty.clone(),
-					right: empty.clone(),
-					value: new_value
-				} )
-			},
+			Tree::Empty => Some( Tree::singleton(new_value) ),
 			Tree::Node { ref value, .. } => self.try_insert_with_candidate(new_value, value.clone())
 		}
 	}
@@ -58,12 +51,7 @@ impl<T: Ord + Clone + Debug> Tree<T> {
 				if new_value == candidate {
 					None
 				} else {
-					let empty = Arc::new( Tree::empty() );
-					Some( Tree::Node { 
-						left: empty.clone(),
-						right: empty.clone(),
-						value: new_value
-					} )
+					Some( Tree::singleton(new_value) )
 				}
 			},
 			Tree::Node { ref left, ref value, ref right } => {
@@ -85,7 +73,17 @@ impl<T: Ord + Clone + Debug> Tree<T> {
 			}
 		}
 	}
+	fn singleton(value: T) -> Self {
+		let empty: Arc<Tree<T>> = Arc::new( Tree::empty() );
+		Tree::Node { 
+			left: empty.clone(),
+			right: empty,
+			value: value
+		}
+	}
 }
+
+
 
 #[test]
 fn empty_contains_nothing() {
