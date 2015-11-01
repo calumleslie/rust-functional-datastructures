@@ -1,14 +1,15 @@
 use std::sync::Arc;
 
 #[derive(Debug)]
-enum StackError { NoSuchElementException }
+enum StackError { NoSuchElementException, IndexOutOfRange }
 
 trait Stack<T: Clone> {
 	fn empty() -> Self;
 	fn is_empty(&self) -> bool;
-	fn cons(self, value: T) -> Self;
+	fn cons(&self, value: T) -> Self;
 	fn head(&self) -> Result<T, StackError>;
 	fn tail(&self) -> Result<Arc<Self>, StackError>;
+	fn update(&self, i: u32, value: T) -> Result<Self,StackError>; 
 }
 
 #[derive(Debug, Clone)]
@@ -27,19 +28,31 @@ impl<T: Clone> Stack<T> for CustomStack<T> {
 			_ => false,
 		}
 	}
-	fn cons(self, value: T) -> Self {
-		return CustomStack::Cons { value: value, tail: Arc::new( self ) };
+	fn cons(&self, value: T) -> Self {
+		return CustomStack::Cons { value: value, tail: Arc::new( self.clone() ) };
 	}
 	fn head(&self) -> Result<T, StackError> {
 		return match *self {
 			CustomStack::Empty => Err(StackError::NoSuchElementException),
-			CustomStack::Cons { ref value, tail: _ } => Ok(value.clone())
+			CustomStack::Cons { ref value, .. } => Ok(value.clone())
 		}
 	}
 	fn tail(&self) -> Result<Arc<Self>, StackError> {
 		return match *self {
 			CustomStack::Empty => Err(StackError::NoSuchElementException),
-			CustomStack::Cons { value: _, ref tail } => Ok(tail.clone())
+			CustomStack::Cons { ref tail, .. } => Ok(tail.clone())
+		}
+	}
+	fn update(&self, i: u32, new_value: T) -> Result<Self,StackError> {
+		return match *self {
+			CustomStack::Empty => Err(StackError::IndexOutOfRange),
+			CustomStack::Cons { ref value, ref tail } => match i {
+				0 => Ok(tail.clone().cons(new_value)),
+				_ => match tail.update(i - 1, new_value) {
+					Ok(updated_tail) => Ok(updated_tail.cons(value.clone())),
+					e @ Err(_) => e
+				}
+			}
 		}
 	}
 }
@@ -101,4 +114,22 @@ fn cloneable() {
 
 	assert!( tailtail.head().unwrap() == 1 );
 	assert!( tail.head().unwrap() == 2 );
+}
+
+#[test]
+fn update_valid() {
+	let stack: CustomStack<i32> = CustomStack::empty().cons(1).cons(2).cons(3);
+	let updated = stack.clone().update(1,10).unwrap();
+
+	assert!(updated.head().unwrap() == 3);
+	assert!(updated.tail().unwrap().head().unwrap() == 10);
+	assert!(updated.tail().unwrap().tail().unwrap().head().unwrap() == 1);
+}
+
+#[test]
+fn update_invalid() {
+	let stack: CustomStack<i32> = CustomStack::empty().cons(1).cons(2).cons(3);
+	let updated = stack.clone().update(4,10);
+
+	assert!(updated.is_err());
 }
