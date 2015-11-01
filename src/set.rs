@@ -18,7 +18,12 @@ impl <T: Ord + Clone + Debug> Set<T> for Tree<T> {
 		return Tree::Empty;
 	}
 	fn insert(&self, new_value: T) -> Self {
-		self.try_insert(new_value).unwrap_or_else(||self.clone())
+		match *self {
+			Tree::Empty => Tree::singleton(new_value),
+			Tree::Node { ref value, .. } => self.
+				try_insert_with_candidate(new_value, value.clone()).
+				unwrap_or_else(||self.clone())
+		}
 	}
 	fn member(&self, search_value: T) -> bool {
 		return match *self {
@@ -37,12 +42,6 @@ impl<T: Ord + Clone + Debug> Tree<T> {
 			} else {
 				right.member_with_candidate(search_value, value.clone())
 			}
-		}
-	}
-	fn try_insert(&self, new_value: T) -> Option<Self> {
-		match *self {
-			Tree::Empty => Some( Tree::singleton(new_value) ),
-			Tree::Node { ref value, .. } => self.try_insert_with_candidate(new_value, value.clone())
 		}
 	}
 	fn try_insert_with_candidate(&self, new_value: T, candidate: T) -> Option<Self> {
