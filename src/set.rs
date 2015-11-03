@@ -11,7 +11,7 @@ trait Set<T: Ord> {
 }
 
 trait Map<K: Ord, V> {
-    fn empty() -> Self;
+    fn empty_map() -> Self;
     fn bind(&self, key: K, value: V) -> Self;
     fn lookup(&self, key: K) -> Option<V>;
 }
@@ -27,13 +27,46 @@ enum Tree<K: Ord + Clone, V: Clone> {
     },
 }
 
+impl <K: Ord + Clone + Debug, V: Clone + Debug> Map<K, V> for Tree<K,V> {
+    fn empty_map() -> Self {
+        return Tree::Empty;
+    }
+    fn bind(&self, new_key: K, new_value: V) -> Self {
+        match *self {
+            Tree::Empty => Tree::singleton(new_key, new_value),
+            Tree::Node { ref left, ref key, ref right, .. } => {
+                if new_key < *key {
+                    left.bind(new_key, new_value)
+                } else if new_key > *key {
+                    right.bind(new_key, new_value)
+                } else {
+                    // Update "this" node.
+                    Tree::Node {
+                        left: left.clone(),
+                        key: new_key,
+                        value: new_value,
+                        right: right.clone(),
+                    }
+                }
+            }
+        }
+    }
+    fn lookup(&self, search_key: K) -> Option<V> {
+        match *self {
+            Tree::Empty => None,
+            Tree::Node { ref key, ref value, .. } =>
+                self.lookup_with_candidate(search_key, &key, &value),
+        }
+    }
+}
+
 impl <T: Ord + Clone + Debug> Set<T> for Tree<T, ()> {
     fn empty() -> Self {
         return Tree::Empty;
     }
     fn insert(&self, new_value: T) -> Self {
         match *self {
-            Tree::Empty => Tree::singleton(new_value),
+            Tree::Empty => Tree::singleton(new_value, ()),
             Tree::Node { ref key, .. } => self.try_insert_with_candidate(new_value, key.clone())
                                               .unwrap_or_else(|| self.clone()),
         }
@@ -43,6 +76,37 @@ impl <T: Ord + Clone + Debug> Set<T> for Tree<T, ()> {
             Tree::Empty => false,
             Tree::Node { ref key, .. } => self.member_with_candidate(search_value, key.clone()),
         };
+    }
+}
+
+
+impl<K: Ord + Clone + Debug, V: Clone + Debug> Tree<K, V> {
+    fn singleton(key: K, value: V) -> Self {
+        let empty: Arc<Self> = Arc::new(Tree::empty_map());
+        Tree::Node {
+            left: empty.clone(),
+            right: empty,
+            key: key,
+            value: value,
+        }
+    }
+    fn lookup_with_candidate(&self,
+                             search_key: K,
+                             candidate_key: &K,
+                             candidate_value: &V)
+                             -> Option<V> {
+        match *self {
+            Tree::Empty => if search_key == *candidate_key {
+                Some(candidate_value.clone())
+            } else {
+                None
+            },
+            Tree::Node { ref left, ref key, ref right, ref value } => if search_key < *key {
+                left.lookup_with_candidate(search_key, candidate_key, candidate_value)
+            } else {
+                right.lookup_with_candidate(search_key, &key, &value)
+            },
+        }
     }
 }
 
@@ -63,7 +127,7 @@ impl<T: Ord + Clone + Debug> Tree<T, ()> {
                 if new_value == candidate {
                     None
                 } else {
-                    Some(Tree::singleton(new_value))
+                    Some(Tree::singleton(new_value, ()))
                 }
             }
             Tree::Node { ref left, ref key, ref right, .. } => {
@@ -89,15 +153,6 @@ impl<T: Ord + Clone + Debug> Tree<T, ()> {
                     None
                 }
             }
-        }
-    }
-    fn singleton(value: T) -> Self {
-        let empty: Arc<Self> = Arc::new(Tree::empty());
-        Tree::Node {
-            left: empty.clone(),
-            right: empty,
-            key: value,
-            value: (),
         }
     }
     #[cfg(test)]
@@ -146,4 +201,18 @@ fn inserted_values_are_contained() {
 fn complete_test() {
     let complete_tree = Tree::complete(12, 14);
     assert!(complete_tree.depth() == 14);
+}
+
+#[test]
+fn map_missing_values_not_present() {
+    let map = Tree::empty_map().bind(10, "hello".to_string());
+
+    assert!(map.lookup(4).is_none());
+}
+
+#[test]
+fn map_present_values_are_present() {
+    let map = Tree::empty_map().bind(10, "hello".to_string());
+
+    assert!(map.lookup(10).unwrap() == "hello");
 }
