@@ -1,6 +1,9 @@
 use std::sync::Arc;
 use std::fmt::Debug;
 
+#[cfg(test)]
+use std::cmp;
+
 trait Set<T: Ord> {
     fn empty() -> Self;
     fn insert(&self, value: T) -> Self;
@@ -88,6 +91,26 @@ impl<T: Ord + Clone + Debug> Tree<T> {
             value: value,
         }
     }
+    #[cfg(test)]
+    fn complete(value: T, depth: u32) -> Self {
+        let mut tree: Arc<Tree<T>> = Arc::new(Tree::empty());
+        for _ in 0..depth {
+            tree = Arc::new(Tree::Node {
+                left: tree.clone(),
+                value: value.clone(),
+                right: tree,
+            })
+        }
+        // TODO: This is pretty untidy
+        return (*tree).clone();
+    }
+    #[cfg(test)]
+    fn depth(&self) -> u32 {
+        match *self {
+            Tree::Empty => 0,
+            Tree::Node { ref left, ref right, .. } => 1 + cmp::max(left.depth(), right.depth()),
+        }
+    }
 }
 
 
@@ -107,4 +130,10 @@ fn inserted_values_are_contained() {
     assert!(tree.member(3));
     assert!(tree.member(5));
     assert!(!tree.member(42));
+}
+
+#[test]
+fn complete_test() {
+    let complete_tree = Tree::complete(12, 14);
+    assert!(complete_tree.depth() == 14);
 }
