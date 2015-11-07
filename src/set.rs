@@ -82,10 +82,7 @@ impl <T: Ord + Clone + Debug> Set<T> for Tree<T, ()> {
         }
     }
     fn member(&self, search_value: T) -> bool {
-        return match *self {
-            Tree::Empty => false,
-            Tree::Node { ref key, .. } => self.member_with_candidate(search_value, key.clone()),
-        };
+        self.lookup(search_value).is_some()
     }
 }
 
@@ -121,16 +118,6 @@ impl<K: Ord + Clone + Debug, V: Clone + Debug> Tree<K, V> {
 }
 
 impl<T: Ord + Clone + Debug> Tree<T, ()> {
-    fn member_with_candidate(&self, search_value: T, best_candidate: T) -> bool {
-        return match *self {
-            Tree::Empty => search_value == best_candidate,
-            Tree::Node { ref left, ref key, ref right, .. } => if search_value < *key {
-                left.member_with_candidate(search_value, best_candidate)
-            } else {
-                right.member_with_candidate(search_value, key.clone())
-            },
-        };
-    }
     fn try_insert_with_candidate(&self, new_value: T, candidate: T) -> Option<Self> {
         match *self {
             Tree::Empty => {
