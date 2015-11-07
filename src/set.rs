@@ -5,7 +5,7 @@ use std::fmt::Debug;
 use std::cmp;
 
 /// A trait representing an immutable Set type.
-pub trait Set<T: Ord> {
+pub trait Set<T: Eq> {
     /// Returns a set containing nothing.
     fn empty() -> Self;
     /// Creates a copy of this set with `value` added to it.
@@ -15,7 +15,7 @@ pub trait Set<T: Ord> {
 }
 
 /// A trait representing an immutable Map type.
-pub trait Map<K: Ord, V> {
+pub trait Map<K: Eq, V> {
     /// Creates a map containing nothing.
     fn empty_map() -> Self;
     /// Returns a copy of this map with `key` bound to `value`
