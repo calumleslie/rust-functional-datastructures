@@ -1,24 +1,55 @@
 use std::sync::Arc;
 
 #[derive(Debug)]
-enum StackError {
+pub enum StackError {
     NoSuchElementException,
     IndexOutOfRange,
 }
 
-trait Stack<T: Clone> {
+/// A trait representing an immutable Stack type.
+pub trait Stack<T: Clone> {
+    /// Returns an empty stack.
     fn empty() -> Self;
+    /// Tests whether a stack is empty.
     fn is_empty(&self) -> bool;
+    /// Returns a new stack with `value` as its head.
     fn cons(&self, value: T) -> Self;
+    /// Returns the head item of the stack.
+    ///
+    /// # Failures
+    ///
+    /// Returns `StackError::NoSuchElementException` if this is an empty stack.
     fn head(&self) -> Result<T, StackError>;
+    /// Returns the tail of the stack (everything but the head).
+    ///
+    /// # Failures
+    /// 
+    /// Returns `StackError::NoSuchElementException` if this is an empty stack.
     fn tail(&self) -> Result<Arc<Self>, StackError>;
+    /// Returns a stack identical to this one except that the value at index `i`
+    /// is replaced by `value`.
+    ///
+    /// # Failures
+    ///
+    /// Returns `StackError::IndexOutOfRange` if `i` is greater than the greatest 
+    /// index currently in this stack (size - 1).
     fn update(&self, i: u32, value: T) -> Result<Self, StackError>;
+    /// Returns the number of items in this stack.
     fn size(&self) -> u32;
+    /// Returns the item currently at index `i` in the stack.
+    ///
+    /// # Failures
+    ///
+    /// Returns `StackError::IndexOutOfRange` if `i` is greater than the greatest 
+    /// index currently in this stack (size - 1).
     fn get(&self, i: u32) -> Result<T, StackError>;
 }
 
+/// An immutable Stack implemented as a singly-linked list.
+///
+/// This is the `CustomStack` type described in chapter 2 of PFDL.
 #[derive(Debug, Clone)]
-enum CustomStack<T> {
+pub enum CustomStack<T> {
     Empty,
     Cons {
         value: T,

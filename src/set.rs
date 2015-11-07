@@ -4,21 +4,82 @@ use std::fmt::Debug;
 #[cfg(test)]
 use std::cmp;
 
-trait Set<T: Ord> {
+/// A trait representing an immutable Set type.
+pub trait Set<T: Ord> {
+    /// Returns a set containing nothing.
     fn empty() -> Self;
+    /// Creates a copy of this set with `value` added to it.
     fn insert(&self, value: T) -> Self;
+    /// Tests whether `value` is a member of this set.
     fn member(&self, value: T) -> bool;
 }
 
-trait Map<K: Ord, V> {
+/// A trait representing an immutable Map type.
+pub trait Map<K: Ord, V> {
+    /// Creates a map containing nothing.
     fn empty_map() -> Self;
+    /// Returns a copy of this map with `key` bound to `value`
     fn bind(&self, key: K, value: V) -> Self;
+    /// Returns a `Some` of the value bound to `key`, or `None`
+    /// if `key` is not a key in this map.
     fn lookup(&self, key: K) -> Option<V>;
 }
 
+/// An unbalanced binary tree that can be used as both an immutable `Map`
+/// and an immutable `Set`. In the case of a `Set` the value type must
+/// be `()`.
+///
+/// This is the type called `UnbalancedSet` in Chapter 2 of PFDL.
+///
+/// # Examples
+///
+/// Using the type as a map:
+/// 
+/// ```
+/// use functional_datastructures::set::Map;
+/// use functional_datastructures::set::Tree;
+///
+/// let empty_map: Tree<u32,String> = Tree::empty_map();
+/// let map_with_values = empty_map.bind(1, "Harold".to_string())
+///                                .bind(2, "27".to_string());
+///
+/// let map_with_altered_values = map_with_values.bind(1, "Raymond".to_string())
+///                                              .bind(3, "Something else".to_string());
+///
+/// assert!(empty_map.lookup(1).is_none());
+/// assert!(empty_map.lookup(2).is_none());
+/// assert!(empty_map.lookup(3).is_none());
+///
+/// assert!(map_with_values.lookup(1).unwrap() == "Harold");
+/// assert!(map_with_values.lookup(2).unwrap() == "27");
+/// assert!(map_with_values.lookup(3).is_none());
+///
+/// assert!(map_with_altered_values.lookup(1).unwrap() == "Raymond");
+/// assert!(map_with_altered_values.lookup(2).unwrap() == "27");
+/// assert!(map_with_altered_values.lookup(3).unwrap() == "Something else");
+/// ```
+///
+/// Using the type as a set:
+/// 
+/// 
+/// ```
+/// use functional_datastructures::set::Set;
+/// use functional_datastructures::set::Tree;
+///
+/// let empty_set: Tree<u32,()> = Tree::empty();
+/// let set_with_contents = empty_set.insert(1).insert(2);
+///
+/// assert!(!empty_set.member(1));
+/// assert!(!empty_set.member(2));
+
+/// assert!(set_with_contents.member(1));
+/// assert!(set_with_contents.member(2));
+/// ```
 #[derive(Debug, Clone)]
-enum Tree<K: Ord + Clone, V: Clone> {
+pub enum Tree<K: Ord + Clone, V: Clone> {
+    #[doc(hidden)]
     Empty,
+    #[doc(hidden)]
     Node {
         left: Arc<Tree<K, V>>,
         key: K,
@@ -163,7 +224,6 @@ impl<T: Ord + Clone + Debug> Tree<T, ()> {
                 value: (),
             })
         }
-        // TODO: This is pretty untidy
         return (*tree).clone();
     }
     #[cfg(test)]
