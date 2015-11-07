@@ -37,7 +37,7 @@ impl <K: Ord + Clone + Debug, V: Clone + Debug> Map<K, V> for Tree<K,V> {
             Tree::Node { ref left, ref key, ref right, ref value } => {
                 if new_key < *key {
                     Tree::Node {
-                        left: Arc::new( left.bind(new_key, new_value) ),
+                        left: Arc::new(left.bind(new_key, new_value)),
                         key: key.clone(),
                         value: value.clone(),
                         right: right.clone(),
@@ -47,7 +47,7 @@ impl <K: Ord + Clone + Debug, V: Clone + Debug> Map<K, V> for Tree<K,V> {
                         left: left.clone(),
                         key: key.clone(),
                         value: value.clone(),
-                        right: Arc::new( right.bind(new_key, new_value) ),
+                        right: Arc::new(right.bind(new_key, new_value)),
                     }
                 } else {
                     // Update "this" node.
@@ -219,7 +219,7 @@ fn map_values_can_be_replaced() {
     let map1 = Tree::empty_map().bind(3, "three").bind(1, "one").bind(2, "two");
 
 
-    let map2 = map1.bind( 2, "not two" );
+    let map2 = map1.bind(2, "not two");
 
     assert!(map1.lookup(2).unwrap() == "two");
     assert!(map2.lookup(2).unwrap() == "not two");
