@@ -34,11 +34,21 @@ impl <K: Ord + Clone + Debug, V: Clone + Debug> Map<K, V> for Tree<K,V> {
     fn bind(&self, new_key: K, new_value: V) -> Self {
         match *self {
             Tree::Empty => Tree::singleton(new_key, new_value),
-            Tree::Node { ref left, ref key, ref right, .. } => {
+            Tree::Node { ref left, ref key, ref right, ref value } => {
                 if new_key < *key {
-                    left.bind(new_key, new_value)
+                    Tree::Node {
+                        left: Arc::new( left.bind(new_key, new_value) ),
+                        key: key.clone(),
+                        value: value.clone(),
+                        right: right.clone(),
+                    }
                 } else if new_key > *key {
-                    right.bind(new_key, new_value)
+                    Tree::Node {
+                        left: left.clone(),
+                        key: key.clone(),
+                        value: value.clone(),
+                        right: Arc::new( right.bind(new_key, new_value) ),
+                    }
                 } else {
                     // Update "this" node.
                     Tree::Node {
@@ -215,4 +225,15 @@ fn map_present_values_are_present() {
     let map = Tree::empty_map().bind(10, "hello".to_string());
 
     assert!(map.lookup(10).unwrap() == "hello");
+}
+
+#[test]
+fn map_values_can_be_replaced() {
+    let map1 = Tree::empty_map().bind(3, "three").bind(1, "one").bind(2, "two");
+
+
+    let map2 = map1.bind( 2, "not two" );
+
+    assert!(map1.lookup(2).unwrap() == "two");
+    assert!(map2.lookup(2).unwrap() == "not two");
 }
